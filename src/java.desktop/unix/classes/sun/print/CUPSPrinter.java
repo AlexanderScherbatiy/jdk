@@ -51,9 +51,10 @@ public class CUPSPrinter  {
     private static final String debugPrefix = "CUPSPrinter>> ";
     private static final double PRINTER_DPI = 72.0;
     private boolean initialized;
-    private static native String getCupsServer();
+    private static native String getCupsServer(boolean keepOriginal);
     private static native int getCupsPort();
     private static native String getCupsDefaultPrinter();
+    private static native String[] getCupsDefaultPrinters();
     private static native boolean canConnect(String server, int port);
     private static native boolean initIDs();
     // These functions need to be synchronized as
@@ -78,7 +79,12 @@ public class CUPSPrinter  {
 
     private static boolean libFound;
     private static String cupsServer = null;
+    private static String cupsOriginalServer = null;
     private static int cupsPort = 0;
+
+    private static final boolean isSandbox = java.security.AccessController
+            .doPrivileged((java.security.PrivilegedAction<Boolean>) () ->
+                    System.getenv("APP_SANDBOX_CONTAINER_ID") != null);
 
     static {
         // load awt library to access native code
@@ -91,8 +97,11 @@ public class CUPSPrinter  {
             });
         libFound = initIDs();
         if (libFound) {
-           cupsServer = getCupsServer();
+           cupsServer = getCupsServer(false);
            cupsPort = getCupsPort();
+           if (isSandbox) {
+               cupsOriginalServer = getCupsServer(true);
+           }
         }
     }
 
@@ -376,6 +385,16 @@ public class CUPSPrinter  {
      * Get list of all CUPS printers using IPP.
      */
     static String[] getAllPrinters() {
+
+        if (isSandbox) {
+            String[] defaultPrinters = getCupsDefaultPrinters();
+            if (defaultPrinters != null && defaultPrinters.length > 0) {
+                return defaultPrinters;
+            }
+            IPPPrintService.debug_println(debugPrefix+
+                    "Original CUPS server returns no printers in sandbox");
+        }
+
         try {
             URL url = new URL("http", getServer(), getPort(), "");
 
@@ -459,14 +478,25 @@ public class CUPSPrinter  {
     }
 
     /**
+     * Returns CUPS original (a fully-qualified hostname,
+     * a numeric IPv4 or IPv6 address, or a domain socket pathname)
+     * server name.
+     */
+    private static String getOriginalServer() {
+        return cupsOriginalServer;
+    }
+
+    /**
      * Detects if CUPS is running.
      */
     public static boolean isCupsRunning() {
         IPPPrintService.debug_println(debugPrefix+"libFound "+libFound);
         if (libFound) {
-            IPPPrintService.debug_println(debugPrefix+"CUPS server "+getServer()+
-                                          " port "+getPort());
-            return canConnect(getServer(), getPort());
+            String server = isSandbox ? getOriginalServer() : getServer();
+            IPPPrintService.debug_println(debugPrefix+"CUPS server "+server+
+                                          " port "+getPort()+
+                                          (isSandbox ? " isSandbox true" : ""));
+            return canConnect(server, getPort());
         } else {
             return false;
         }
