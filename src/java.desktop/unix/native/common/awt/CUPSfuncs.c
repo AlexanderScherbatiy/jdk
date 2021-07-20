@@ -167,18 +167,12 @@ Java_sun_print_CUPSPrinter_initIDs(JNIEnv *env,
  */
 JNIEXPORT jstring JNICALL
 Java_sun_print_CUPSPrinter_getCupsServer(JNIEnv *env,
-                                         jobject printObj,
-                                         jboolean keepOriginal)
+                                         jobject printObj)
 {
     jstring cServer = NULL;
     const char* server = j2d_cupsServer();
     if (server != NULL) {
-        // Is this a local domain socket?
-        if (keepOriginal == JNI_FALSE && strncmp(server, "/", 1) == 0) {
-            cServer = JNU_NewStringPlatform(env, "localhost");
-        } else {
-            cServer = JNU_NewStringPlatform(env, server);
-        }
+        cServer = JNU_NewStringPlatform(env, server);
     }
     return cServer;
 }

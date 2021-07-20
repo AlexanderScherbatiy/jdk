@@ -51,7 +51,7 @@ public class CUPSPrinter  {
     private static final String debugPrefix = "CUPSPrinter>> ";
     private static final double PRINTER_DPI = 72.0;
     private boolean initialized;
-    private static native String getCupsServer(boolean keepOriginal);
+    private static native String getCupsServer();
     private static native int getCupsPort();
     private static native String getCupsDefaultPrinter();
     private static native String[] getCupsDefaultPrinters();
@@ -97,11 +97,12 @@ public class CUPSPrinter  {
             });
         libFound = initIDs();
         if (libFound) {
-           cupsServer = getCupsServer(false);
+           cupsOriginalServer = getCupsServer();
+           // Is this a local domain socket?
+           boolean isDomainSocket = cupsOriginalServer != null
+                   && cupsOriginalServer.startsWith("/");
+           cupsServer = isDomainSocket ? "localhost" : cupsOriginalServer;
            cupsPort = getCupsPort();
-           if (isSandbox) {
-               cupsOriginalServer = getCupsServer(true);
-           }
         }
     }
 
@@ -454,6 +455,9 @@ public class CUPSPrinter  {
 
     }
 
+    /**
+     * Get list of all CUPS printers using cups functions.
+     */
     static String[] getAllLocalPrinters() {
         return getCupsDefaultPrinters();
     }
