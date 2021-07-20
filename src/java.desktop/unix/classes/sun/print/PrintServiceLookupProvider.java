@@ -278,23 +278,33 @@ public class PrintServiceLookupProvider extends PrintServiceLookup
               "Exception getting default printer : " + t);
         }
         if (CUPSPrinter.isCupsRunning()) {
-            try {
-                printerURIs = CUPSPrinter.getAllPrinters();
-                IPPPrintService.debug_println("CUPS URIs = " + printerURIs);
-                if (printerURIs != null) {
-                    for (int p = 0; p < printerURIs.length; p++) {
-                       IPPPrintService.debug_println("URI="+printerURIs[p]);
-                    }
+            if(CUPSPrinter.useDomainSocketPathname()) {
+                printers = CUPSPrinter.getAllLocalPrinters();
+                printerURIs = new String[printers.length];
+                for (int p = 0; p < printers.length; p++) {
+                    printerURIs[p] = String.format("ipp://%s:%d/printers/%s",
+                            CUPSPrinter.getServer(), CUPSPrinter.getPort(), printers[p]);
+                    IPPPrintService.debug_println("URI="+printerURIs[p]);
                 }
-            } catch (Throwable t) {
-            IPPPrintService.debug_println(debugPrefix+
-              "Exception getting all CUPS printers : " + t);
-            }
-            if ((printerURIs != null) && (printerURIs.length > 0)) {
-                printers = new String[printerURIs.length];
-                for (int i=0; i<printerURIs.length; i++) {
-                    int lastIndex = printerURIs[i].lastIndexOf("/");
-                    printers[i] = printerURIs[i].substring(lastIndex+1);
+            } else {
+                try {
+                    printerURIs = CUPSPrinter.getAllPrinters();
+                    IPPPrintService.debug_println("CUPS URIs = " + printerURIs);
+                    if (printerURIs != null) {
+                        for (int p = 0; p < printerURIs.length; p++) {
+                           IPPPrintService.debug_println("URI="+printerURIs[p]);
+                        }
+                    }
+                } catch (Throwable t) {
+                IPPPrintService.debug_println(debugPrefix+
+                  "Exception getting all CUPS printers : " + t);
+                }
+                if ((printerURIs != null) && (printerURIs.length > 0)) {
+                    printers = new String[printerURIs.length];
+                    for (int i=0; i<printerURIs.length; i++) {
+                        int lastIndex = printerURIs[i].lastIndexOf("/");
+                        printers[i] = printerURIs[i].substring(lastIndex+1);
+                    }
                 }
             }
         } else {

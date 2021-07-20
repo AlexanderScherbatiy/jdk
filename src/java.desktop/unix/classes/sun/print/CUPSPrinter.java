@@ -386,15 +386,6 @@ public class CUPSPrinter  {
      */
     static String[] getAllPrinters() {
 
-        if (isSandbox) {
-            String[] defaultPrinters = getCupsDefaultPrinters();
-            if (defaultPrinters != null && defaultPrinters.length > 0) {
-                return defaultPrinters;
-            }
-            IPPPrintService.debug_println(debugPrefix+
-                    "Original CUPS server returns no printers in sandbox");
-        }
-
         try {
             URL url = new URL("http", getServer(), getPort(), "");
 
@@ -463,6 +454,10 @@ public class CUPSPrinter  {
 
     }
 
+    static String[] getAllLocalPrinters() {
+        return getCupsDefaultPrinters();
+    }
+
     /**
      * Returns CUPS server name.
      */
@@ -486,16 +481,24 @@ public class CUPSPrinter  {
         return cupsOriginalServer;
     }
 
+    static boolean useDomainSocketPathname() {
+        return isSandbox && PrintServiceLookupProvider.isMac()
+                && getOriginalServer().startsWith("/");
+    }
+
+
     /**
      * Detects if CUPS is running.
      */
     public static boolean isCupsRunning() {
         IPPPrintService.debug_println(debugPrefix+"libFound "+libFound);
         if (libFound) {
-            String server = isSandbox ? getOriginalServer() : getServer();
+            String server = useDomainSocketPathname() ? getOriginalServer() : getServer();
             IPPPrintService.debug_println(debugPrefix+"CUPS server "+server+
                                           " port "+getPort()+
-                                          (isSandbox ? " isSandbox true" : ""));
+                                          (useDomainSocketPathname()
+                                                  ? " use domain socket pathname"
+                                                  : ""));
             return canConnect(server, getPort());
         } else {
             return false;
