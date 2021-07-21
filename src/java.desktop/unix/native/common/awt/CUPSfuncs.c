@@ -232,6 +232,10 @@ Java_sun_print_CUPSPrinter_getCupsDefaultPrinters(JNIEnv *env,
 
     num_dests = j2d_cupsGetDests(&dests);
 
+    if (dests == NULL) {
+        return NULL;
+    }
+
     nameArray = (*env)->NewObjectArray(env, num_dests, cls, NULL);
     if (nameArray == NULL) {
         j2d_cupsFreeDests(num_dests, dests);
@@ -241,7 +245,7 @@ Java_sun_print_CUPSPrinter_getCupsDefaultPrinters(JNIEnv *env,
         return NULL;
     }
 
-    for (i = 0; dests != NULL && i < num_dests; i++) {
+    for (i = 0; i < num_dests; i++) {
             utf_str = JNU_NewStringPlatform(env, dests[i].name);
             if (utf_str == NULL) {
                 j2d_cupsFreeDests(num_dests, dests);
