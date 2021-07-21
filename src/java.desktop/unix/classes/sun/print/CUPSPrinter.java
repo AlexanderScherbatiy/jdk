@@ -95,7 +95,7 @@ public class CUPSPrinter  {
         if (libFound) {
            cupsServer = getCupsServer();
            // Is this a local domain socket pathname?
-           if (cupsServer.startsWith("/")) {
+           if (cupsServer != null && cupsServer.startsWith("/")) {
                if (isSandboxedApp()) {
                    domainSocketPathname = cupsServer;
                }
