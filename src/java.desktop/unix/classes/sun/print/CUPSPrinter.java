@@ -79,12 +79,8 @@ public class CUPSPrinter  {
 
     private static boolean libFound;
     private static String cupsServer = null;
-    private static String cupsOriginalServer = null;
+    private static String domainSocketPathname = null;
     private static int cupsPort = 0;
-
-    private static final boolean isSandbox = java.security.AccessController
-            .doPrivileged((java.security.PrivilegedAction<Boolean>) () ->
-                    System.getenv("APP_SANDBOX_CONTAINER_ID") != null);
 
     static {
         // load awt library to access native code
@@ -97,11 +93,14 @@ public class CUPSPrinter  {
             });
         libFound = initIDs();
         if (libFound) {
-           cupsOriginalServer = getCupsServer();
-           // Is this a local domain socket?
-           boolean isDomainSocket = cupsOriginalServer != null
-                   && cupsOriginalServer.startsWith("/");
-           cupsServer = isDomainSocket ? "localhost" : cupsOriginalServer;
+           cupsServer = getCupsServer();
+           // Is this a local domain socket pathname?
+           if (cupsServer.startsWith("/")) {
+               if (isSandboxedApp()) {
+                   domainSocketPathname = cupsServer;
+               }
+               cupsServer = "localhost";
+           }
            cupsPort = getCupsPort();
         }
     }
@@ -387,6 +386,18 @@ public class CUPSPrinter  {
      */
     static String[] getAllPrinters() {
 
+        if (getDomainSocketPathname() != null) {
+            String[] printerNames = getCupsDefaultPrinters();
+            if (printerNames != null && printerNames.length > 0) {
+                String[] printerURIs = new String[printerNames.length];
+                for (int i=0; i< printerNames.length; i++) {
+                    printerURIs[i] = String.format("ipp://%s:%d/printers/%s",
+                            getServer(), getPort(), printerNames[i]);
+                }
+                return printerURIs;
+            }
+        }
+
         try {
             URL url = new URL("http", getServer(), getPort(), "");
 
@@ -456,13 +467,6 @@ public class CUPSPrinter  {
     }
 
     /**
-     * Get list of all CUPS printers using cups functions.
-     */
-    static String[] getAllLocalPrinters() {
-        return getCupsDefaultPrinters();
-    }
-
-    /**
      * Returns CUPS server name.
      */
     public static String getServer() {
@@ -477,17 +481,19 @@ public class CUPSPrinter  {
     }
 
     /**
-     * Returns CUPS original (a fully-qualified hostname,
-     * a numeric IPv4 or IPv6 address, or a domain socket pathname)
-     * server name.
+     * Returns CUPS domain socket pathname.
      */
-    private static String getOriginalServer() {
-        return cupsOriginalServer;
+    private static String getDomainSocketPathname() {
+        return domainSocketPathname;
     }
 
-    static boolean useDomainSocketPathname() {
-        return isSandbox && PrintServiceLookupProvider.isMac()
-                && getOriginalServer().startsWith("/");
+    private static boolean isSandboxedApp() {
+        if (PrintServiceLookupProvider.isMac()) {
+            return java.security.AccessController
+                    .doPrivileged((java.security.PrivilegedAction<Boolean>) () ->
+                            System.getenv("APP_SANDBOX_CONTAINER_ID") != null);
+        }
+        return false;
     }
 
 
@@ -497,10 +503,10 @@ public class CUPSPrinter  {
     public static boolean isCupsRunning() {
         IPPPrintService.debug_println(debugPrefix+"libFound "+libFound);
         if (libFound) {
-            String server = useDomainSocketPathname() ? getOriginalServer() : getServer();
+            String server = getDomainSocketPathname() != null ? getDomainSocketPathname() : getServer();
             IPPPrintService.debug_println(debugPrefix+"CUPS server "+server+
                                           " port "+getPort()+
-                                          (useDomainSocketPathname()
+                                          (getDomainSocketPathname() != null
                                                   ? " use domain socket pathname"
                                                   : ""));
             return canConnect(server, getPort());
