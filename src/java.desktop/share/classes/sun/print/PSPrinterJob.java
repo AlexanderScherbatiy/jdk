@@ -666,6 +666,13 @@ public class PSPrinterJob extends RasterPrinterJob {
                     mPSStream.print(" /Duplex true /Tumble true ");
                 }
             }
+
+            String outputBin = getOutputBinValue(outputBinAttr);
+
+            if (outputBin != null) {
+                mPSStream.print(" /OutputType (" + outputBin + ") ");
+            }
+
             mPSStream.println(" >> setpagedevice ");
         }
         mPSStream.println("%%EndSetup");
