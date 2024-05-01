@@ -61,6 +61,7 @@ import javax.print.attribute.standard.Copies;
 import javax.print.attribute.standard.Destination;
 import javax.print.attribute.standard.DialogTypeSelection;
 import javax.print.attribute.standard.JobName;
+import javax.print.attribute.standard.OutputBin;
 import javax.print.attribute.standard.Sides;
 
 import java.io.BufferedOutputStream;
@@ -491,13 +492,18 @@ public class PSPrinterJob extends RasterPrinterJob {
         if (attributes == null) {
             return; // now always use attributes, so this shouldn't happen.
         }
+        mOptions = "";
         Attribute attr = attributes.get(Media.class);
         if (attr instanceof CustomMediaTray) {
             CustomMediaTray customTray = (CustomMediaTray)attr;
             String choice = customTray.getChoiceName();
             if (choice != null) {
-                mOptions = " InputSlot="+ choice;
+                mOptions += " InputSlot="+ choice;
             }
+        }
+        String outputBin = getOutputBinValue(outputBinAttr);
+        if (outputBin != null) {
+            mOptions += " output-bin=" + outputBin;
         }
     }
 
