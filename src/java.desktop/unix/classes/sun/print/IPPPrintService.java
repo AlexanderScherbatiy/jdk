@@ -1039,7 +1039,7 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
 
     private Media[] getSupportedMedia() {
         if ((getAttMap != null) &&
-            getAttMap.containsKeygetSupportedMedia()("media-supported")) {
+            getAttMap.containsKey("media-supported")) {
 
             AttributeClass attribClass = getAttMap.get("media-supported");
 
