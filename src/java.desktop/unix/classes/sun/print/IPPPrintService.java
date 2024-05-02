@@ -832,7 +832,7 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
             System.arraycopy(supportedRes, 0, arr, 0, supportedRes.length);
             return arr;
         } else if (category == OutputBin.class) {
-            return Arrays.copyOf(outputBins, outputBins.length);
+            return getSupportedOutputBins();
         }
 
         return null;
@@ -1039,7 +1039,7 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
 
     private Media[] getSupportedMedia() {
         if ((getAttMap != null) &&
-            getAttMap.containsKey("media-supported")) {
+            getAttMap.containsKeygetSupportedMedia()("media-supported")) {
 
             AttributeClass attribClass = getAttMap.get("media-supported");
 
@@ -1059,6 +1059,26 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
         return new Media[0];
     }
 
+
+    private OutputBin[] getSupportedOutputBins() {
+        final String propertyName = "output-bin-supported";
+        if ((getAttMap != null) &&
+                getAttMap.containsKey(propertyName)) {
+
+            AttributeClass attribClass = getAttMap.get(propertyName);
+
+            if (attribClass != null) {
+                String[] values = attribClass.getArrayOfStringValues();
+                OutputBin[] outputBinNames =
+                        new OutputBin[values.length];
+                for (int i = 0; i < values.length; i++) {
+                    outputBinNames[i] = CustomOutputBin.createOutputBin(values[i], values[i]);
+                }
+                return outputBinNames;
+            }
+        }
+        return null;
+    }
 
     public synchronized Class<?>[] getSupportedAttributeCategories() {
         if (supportedCats != null) {
@@ -1121,6 +1141,10 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
         if (GraphicsEnvironment.isHeadless() == false) {
             catList.add(DialogOwner.class);
             catList.add(DialogTypeSelection.class);
+        }
+
+        if (getAttMap != null && getAttMap.containsKey("output-bin-supported")) {
+            catList.add(OutputBin.class);
         }
 
         supportedCats = new Class<?>[catList.size()];
@@ -1652,6 +1676,10 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
              } else {
                  return new PrinterResolution(300, 300, PrinterResolution.DPI);
              }
+        } else if (category == OutputBin.class) {
+            if (attribClass != null) {
+                return CustomOutputBin.createOutputBin(attribClass.getStringValue(), attribClass.getStringValue());
+            }
         }
 
         return null;
