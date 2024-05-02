@@ -110,6 +110,9 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
 
     public static final boolean debugPrint;
     private static final String debugPrefix = "IPPPrintService>> ";
+
+    private static final boolean JAVA_PRINT_DEBUG = "true".equals(System.getenv("JAVA_PRINT_DEBUG"));
+
     protected static void debug_println(String str) {
         if (debugPrint) {
             System.out.println(str);
@@ -832,10 +835,24 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
             System.arraycopy(supportedRes, 0, arr, 0, supportedRes.length);
             return arr;
         } else if (category == OutputBin.class) {
+            if (JAVA_PRINT_DEBUG) {
+                printOutputBins("CUPS", outputBins);
+                printOutputBins("IPP ", getSupportedOutputBins());
+            }
             return getSupportedOutputBins();
         }
 
         return null;
+    }
+
+    private static void printOutputBins(String prefix, OutputBin[] outputBins) {
+        System.out.printf("%s output bins: %d%n", prefix, outputBins.length);
+        for (OutputBin outputBin : outputBins) {
+            if (outputBin instanceof CustomOutputBin customOutputBin) {
+                System.out.printf("%s output bin name: %s, choice: %s%n", prefix,
+                        customOutputBin.getCustomName(), customOutputBin.getChoiceName());
+            }
+        }
     }
 
     //This class is for getting all pre-defined Finishings

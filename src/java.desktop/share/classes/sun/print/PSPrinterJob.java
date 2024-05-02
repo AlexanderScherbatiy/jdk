@@ -107,6 +107,8 @@ import javax.print.attribute.standard.Media;
  */
 public class PSPrinterJob extends RasterPrinterJob {
 
+    private static final boolean JAVA_PRINT_DEBUG = "true".equals(System.getenv("JAVA_PRINT_DEBUG"));
+
  /* Class Constants */
 
     /**
@@ -504,6 +506,10 @@ public class PSPrinterJob extends RasterPrinterJob {
         String outputBin = getOutputBinValue(outputBinAttr);
         if (outputBin != null) {
             mOptions += " output-bin=" + outputBin;
+        }
+
+        if (JAVA_PRINT_DEBUG) {
+            System.out.printf("PSPrinterJob options: '%s'%n", mOptions);
         }
     }
 
