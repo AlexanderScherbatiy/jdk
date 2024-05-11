@@ -443,6 +443,7 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
             if ((urlConnection = getIPPConnection(myURL)) == null) {
                 mediaSizeNames = new MediaSizeName[0];
                 mediaTrays = new MediaTray[0];
+                outputBins = new OutputBin[0];
                 debug_println(debugPrefix+"initAttributes, NULL urlConnection ");
                 init = true;
                 return;
@@ -450,6 +451,9 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
 
             // get all supported attributes through IPP
             opGetAttributes();
+
+            // check IPP values first for OutputBins
+            outputBins = getSupportedOutputBins();
 
             if (isCupsPrinter) {
                 // note, it is possible to query media in CUPS using IPP
@@ -463,7 +467,9 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
                         cps = new CUPSPrinter(printer);
                         mediaSizeNames = cps.getMediaSizeNames();
                         mediaTrays = cps.getMediaTrays();
-                        outputBins = cps.getOutputBins();
+                        if (outputBins == null) {
+                            outputBins = cps.getOutputBins();
+                        }
                         customMediaSizeNames = cps.getCustomMediaSizeNames();
                         defaultMediaIndex = cps.getDefaultMediaIndex();
                         rawResolutions = cps.getRawResolutions();
@@ -1059,6 +1065,25 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
         return new Media[0];
     }
 
+    private OutputBin[] getSupportedOutputBins() {
+        if ((getAttMap != null) && getAttMap.containsKey("output-bin-supported")) {
+
+            AttributeClass attribClass = getAttMap.get("output-bin-supported");
+
+            if (attribClass != null) {
+                String[] values = attribClass.getArrayOfStringValues();
+                if (values == null || values.length == 0) {
+                    return null;
+                }
+                OutputBin[] outputBinNames = new OutputBin[values.length];
+                for (int i = 0; i < values.length; i++) {
+                    outputBinNames[i] = CustomOutputBin.createOutputBin(values[i], values[i]);
+                }
+                return outputBinNames;
+            }
+        }
+        return null;
+    }
 
     public synchronized Class<?>[] getSupportedAttributeCategories() {
         if (supportedCats != null) {
@@ -1121,6 +1146,10 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
         if (GraphicsEnvironment.isHeadless() == false) {
             catList.add(DialogOwner.class);
             catList.add(DialogTypeSelection.class);
+        }
+
+        if (getAttMap != null && getAttMap.containsKey("output-bin-supported")) {
+            catList.add(OutputBin.class);
         }
 
         supportedCats = new Class<?>[catList.size()];
@@ -1652,6 +1681,10 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
              } else {
                  return new PrinterResolution(300, 300, PrinterResolution.DPI);
              }
+        } else if (category == OutputBin.class) {
+            if (attribClass != null) {
+                return CustomOutputBin.createOutputBin(attribClass.getStringValue(), attribClass.getStringValue());
+            }
         }
 
         return null;
