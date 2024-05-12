@@ -78,8 +78,10 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 import sun.awt.CharsetString;
 import sun.awt.FontConfiguration;
@@ -1649,7 +1651,9 @@ public class PSPrinterJob extends RasterPrinterJob {
                 execCmd[n++] = "-o job-sheets=standard";
             }
             if ((pFlags & OPTIONS) != 0) {
-                execCmd[n++] = "-o" + options;
+                for(String option: options.trim().split(" ")) {
+                    execCmd[n++] = "-o " + option;
+                }
             }
         } else {
             ncomps+=1; //add 1 arg for lp
@@ -1672,7 +1676,9 @@ public class PSPrinterJob extends RasterPrinterJob {
                 execCmd[n++] = "-o job-sheets=standard";
             }
             if ((pFlags & OPTIONS) != 0) {
-                execCmd[n++] = "-o" + options;
+                for(String option: options.trim().split(" ")) {
+                    execCmd[n++] = "-o " + option;
+                }
             }
         }
         execCmd[n++] = spoolFile;
