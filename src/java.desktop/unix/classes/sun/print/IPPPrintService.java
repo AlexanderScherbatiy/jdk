@@ -473,13 +473,6 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
             // get all supported attributes through IPP
             opGetAttributes();
 
-            // check IPP values first for OutputBins
-            outputBins = getSupportedOutputBins();
-
-            if (JAVA_PRINT_DEBUG) {
-                printOutputBins("IPP", outputBins);
-            }
-
             if (isCupsPrinter) {
                 // note, it is possible to query media in CUPS using IPP
                 // right now we always get it from PPD.
@@ -492,11 +485,9 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
                         cps = new CUPSPrinter(printer);
                         mediaSizeNames = cps.getMediaSizeNames();
                         mediaTrays = cps.getMediaTrays();
-                        if (outputBins == null) {
-                            outputBins = cps.getOutputBins();
-                            if (JAVA_PRINT_DEBUG) {
-                                printOutputBins("CUPS", outputBins);
-                            }
+                        outputBins = cps.getOutputBins();
+                        if (JAVA_PRINT_DEBUG) {
+                            printOutputBins("CUPS", outputBins);
                         }
                         customMediaSizeNames = cps.getCustomMediaSizeNames();
                         defaultMediaIndex = cps.getDefaultMediaIndex();
@@ -531,6 +522,12 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
                 mediaTrays = new MediaTray[trayList.size()];
                 mediaTrays = trayList.toArray(mediaTrays);
             }
+
+            outputBins = getSupportedOutputBins();
+            if (JAVA_PRINT_DEBUG) {
+                printOutputBins("IPP", outputBins);
+            }
+
             urlConnection.disconnect();
 
             init = true;
@@ -1101,7 +1098,7 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
             if (attribClass != null) {
                 String[] values = attribClass.getArrayOfStringValues();
                 if (values == null || values.length == 0) {
-                    return null;
+                    return new OutputBin[0];
                 }
                 OutputBin[] outputBinNames = new OutputBin[values.length];
                 for (int i = 0; i < values.length; i++) {
@@ -1110,7 +1107,7 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
                 return outputBinNames;
             }
         }
-        return null;
+        return new OutputBin[0];
     }
 
     public synchronized Class<?>[] getSupportedAttributeCategories() {
