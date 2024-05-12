@@ -78,10 +78,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Locale;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 import sun.awt.CharsetString;
 import sun.awt.FontConfiguration;
