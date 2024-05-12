@@ -110,6 +110,9 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
 
     public static final boolean debugPrint;
     private static final String debugPrefix = "IPPPrintService>> ";
+
+    private static final boolean JAVA_PRINT_DEBUG = "true".equals(System.getenv("JAVA_PRINT_DEBUG"));
+
     protected static void debug_println(String str) {
         if (debugPrint) {
             System.out.println(str);
@@ -428,6 +431,24 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
         }
     }
 
+    private static void printOutputBins(String prefix, OutputBin[] outputBins) {
+
+        if (outputBins == null) {
+            System.out.printf("%s output bins: null%n");
+            return;
+        }
+
+        System.out.printf("%s output bins: %d%n", prefix, outputBins.length);
+
+        for (OutputBin outputBin : outputBins) {
+            if (outputBin instanceof CustomOutputBin customOutputBin) {
+                System.out.printf("%s output bin name: %s, choice: %s%n", prefix,
+                        customOutputBin.getCustomName(), customOutputBin.getChoiceName());
+            } else {
+                System.out.printf("%s output bin: %s%n", outputBin);
+            }
+        }
+    }
 
     /*
      * Initialize mediaSizeNames, mediaTrays and other attributes.
@@ -455,6 +476,10 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
             // check IPP values first for OutputBins
             outputBins = getSupportedOutputBins();
 
+            if (JAVA_PRINT_DEBUG) {
+                printOutputBins("IPP", outputBins);
+            }
+
             if (isCupsPrinter) {
                 // note, it is possible to query media in CUPS using IPP
                 // right now we always get it from PPD.
@@ -469,6 +494,9 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
                         mediaTrays = cps.getMediaTrays();
                         if (outputBins == null) {
                             outputBins = cps.getOutputBins();
+                            if (JAVA_PRINT_DEBUG) {
+                                printOutputBins("CUPS", outputBins);
+                            }
                         }
                         customMediaSizeNames = cps.getCustomMediaSizeNames();
                         defaultMediaIndex = cps.getDefaultMediaIndex();
