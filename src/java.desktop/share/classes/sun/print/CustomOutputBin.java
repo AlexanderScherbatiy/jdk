@@ -27,51 +27,38 @@
 package sun.print;
 
 import java.io.Serial;
-import java.util.ArrayList;
+import java.util.Map;
+import java.util.LinkedHashMap;
 
 import javax.print.attribute.EnumSyntax;
 import javax.print.attribute.standard.Media;
 import javax.print.attribute.standard.OutputBin;
 
 public final class CustomOutputBin extends OutputBin {
-    private static ArrayList<String> customStringTable = new ArrayList<>();
-    private static ArrayList<CustomOutputBin> customEnumTable = new ArrayList<>();
-    private String choiceName;
 
-    private CustomOutputBin(int x) {
-        super(x);
-    }
+    private String name;
 
-    private static synchronized int nextValue(String name) {
-      customStringTable.add(name);
-      return (customStringTable.size()-1);
-    }
+    private static final long serialVersionUID = 3018751086294120717L;
 
-    private CustomOutputBin(String name, String choice) {
-        super(nextValue(name));
-        choiceName = choice;
-        customEnumTable.add(this);
+    private static final Map<String, CustomOutputBin> customMap = new LinkedHashMap<>();
+
+    private CustomOutputBin(String name) {
+        super(customMap.size());
+        this.name = name;
     }
 
     /**
      * Creates a custom output bin
      */
-    public static synchronized CustomOutputBin createOutputBin(String name, String choice) {
-        for (CustomOutputBin bin : customEnumTable) {
-            if (bin.getChoiceName().equals(choice) && bin.getCustomName().equals(name)) {
-                return bin;
-            }
-        }
-        return new CustomOutputBin(name, choice);
+    public static synchronized CustomOutputBin createOutputBin(String name) {
+        return customMap.computeIfAbsent(name, n -> new CustomOutputBin(n));
     }
 
-    private static final long serialVersionUID = 3018751086294120717L;
-
     /**
-     * Returns the command string for this media tray.
+     * Gets a custom output bin
      */
-    public String getChoiceName() {
-        return choiceName;
+    public static synchronized CustomOutputBin getOutputBin(String name) {
+        return customMap.get(name);
     }
 
     /**
@@ -86,15 +73,14 @@ public final class CustomOutputBin extends OutputBin {
      */
     @Override
     protected String[] getStringTable() {
-      String[] nameTable = new String[customStringTable.size()];
-      return customStringTable.toArray(nameTable);
+      return customMap.keySet().toArray(new String[customMap.size()]);
     }
 
     /**
      * Returns a custom bin name
      */
     public String getCustomName() {
-        return customStringTable.get(getValue() - getOffset());
+        return name;
     }
 
     /**
@@ -102,7 +88,11 @@ public final class CustomOutputBin extends OutputBin {
      */
     @Override
     protected CustomOutputBin[] getEnumValueTable() {
-        CustomOutputBin[] enumTable = new CustomOutputBin[customEnumTable.size()];
-      return customEnumTable.toArray(enumTable);
+      return customMap.values().toArray(new CustomOutputBin[customMap.size()]);
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }

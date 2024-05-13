@@ -442,8 +442,8 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
 
         for (OutputBin outputBin : outputBins) {
             if (outputBin instanceof CustomOutputBin customOutputBin) {
-                System.out.printf("%s output bin name: %s, choice: %s%n", prefix,
-                        customOutputBin.getCustomName(), customOutputBin.getChoiceName());
+                System.out.printf("%s custom output bin name: %s, bin: %s%n",
+                        prefix, customOutputBin.getCustomName(), customOutputBin);
             } else {
                 System.out.printf("%s output bin: %s%n", outputBin);
             }
@@ -1098,7 +1098,7 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
                 }
                 OutputBin[] outputBinNames = new OutputBin[values.length];
                 for (int i = 0; i < values.length; i++) {
-                    outputBinNames[i] = CustomOutputBin.createOutputBin(values[i], values[i]);
+                    outputBinNames[i] = CustomOutputBin.createOutputBin(values[i]);
                 }
                 return outputBinNames;
             }
@@ -1704,7 +1704,7 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
              }
         } else if (category == OutputBin.class) {
             if (attribClass != null) {
-                return CustomOutputBin.createOutputBin(attribClass.getStringValue(), attribClass.getStringValue());
+                return CustomOutputBin.createOutputBin(attribClass.getStringValue());
             }
         }
 

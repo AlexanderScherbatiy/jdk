@@ -687,15 +687,7 @@ public final class CPrinterJob extends RasterPrinterJob {
             return null;
         }
 
-        for (OutputBin bin : supportedBins) {
-            if (bin instanceof CustomOutputBin customBin){
-                if (customBin.getChoiceName().equals(outputBinName)) {
-                    return customBin;
-                }
-            }
-        }
-
-        return null;
+        return CustomOutputBin.getOutputBin(outputBinName);
     }
 
     private void setPrinterServiceFromNative(String printerName) {
