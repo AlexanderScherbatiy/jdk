@@ -216,6 +216,7 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
         new RequestingUserName("", Locale.getDefault()),
         //SheetCollate.UNCOLLATED, //CUPS has no sheet collate?
         Sides.ONE_SIDED,
+        OutputBin.TOP,
     };
 
 
@@ -1166,10 +1167,6 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
         if (GraphicsEnvironment.isHeadless() == false) {
             catList.add(DialogOwner.class);
             catList.add(DialogTypeSelection.class);
-        }
-
-        if (getAttMap != null && getAttMap.containsKey("output-bin-supported")) {
-            catList.add(OutputBin.class);
         }
 
         supportedCats = new Class<?>[catList.size()];
