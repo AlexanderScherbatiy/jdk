@@ -216,7 +216,6 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
         new RequestingUserName("", Locale.getDefault()),
         //SheetCollate.UNCOLLATED, //CUPS has no sheet collate?
         Sides.ONE_SIDED,
-        OutputBin.TOP,
     };
 
 
