@@ -2914,9 +2914,8 @@ public class ServiceDialog extends JDialog implements ActionListener {
                             }
                         }
                     }
+                    outputEnabled = outputBins.length != 0;
                 }
-
-                outputEnabled = cbOutput.getItemCount() != 0;
             }
 
             cbOutput.setEnabled(outputEnabled);
