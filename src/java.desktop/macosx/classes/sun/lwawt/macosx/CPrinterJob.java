@@ -86,6 +86,8 @@ public final class CPrinterJob extends RasterPrinterJob {
         Toolkit.getDefaultToolkit();
     }
 
+    private static final boolean JAVA_PRINT_DEBUG = "true".equals(System.getenv("JAVA_PRINT_DEBUG"));
+
     /**
      * Presents a dialog to the user for changing the properties of
      * the print job.
@@ -195,6 +197,9 @@ public final class CPrinterJob extends RasterPrinterJob {
         }
 
         outputBin = getOutputBinValue(attributes.get(OutputBin.class));
+        if (JAVA_PRINT_DEBUG) {
+            System.out.printf("[CPrinterJob] setAttributes outputBin: %s%n", outputBin);
+        }
 
         PageRanges pageRangesAttr =  (PageRanges)attributes.get(PageRanges.class);
         if (isSupportedValue(pageRangesAttr, attributes)) {
@@ -664,12 +669,18 @@ public final class CPrinterJob extends RasterPrinterJob {
     }
 
     private String getOutputBin() {
+        if (JAVA_PRINT_DEBUG) {
+            System.out.printf("[CPrinterJob] getOutputBin: %s%n", outputBin);
+        }
         return outputBin;
     }
 
     private void setOutputBin(String outputBinName) {
 
         OutputBin outputBin = CustomOutputBin.createOutputBin(outputBinName);
+        if (JAVA_PRINT_DEBUG) {
+            System.out.printf("[CPrinterJob] setOutputBin name: %s, bin: %s%n", outputBinName, outputBin);
+        }
         if (outputBin != null) {
             attributes.add(outputBin);
         }

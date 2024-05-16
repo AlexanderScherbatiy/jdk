@@ -85,6 +85,113 @@ static void javaPrinterJobToNSPrintInfo(JNIEnv* env, jobject srcPrinterJob, jobj
 #define NS_LANDSCAPE NSLandscapeOrientation
 #endif
 
+static int isDebug() {
+    static int debug = -1;
+    if (debug == -1) {
+        char* debugEnv = getenv("JAVA_PRINT_DEBUG");
+        debug = (debugEnv != NULL && strcmp("true", debugEnv) == 0) ? JNI_TRUE : JNI_FALSE;
+    }
+    return debug;
+}
+
+@interface PrintDebug : NSObject
+@end
+
+@implementation PrintDebug
+
++ (void)showDict:(NSMutableDictionary*)dict {
+    NSLog(@"number of elements: %ld", [dict count]);
+
+    for (NSValue *key in dict) {
+        NSValue *val = dict[key];
+        NSLog(@"key: %@, value: %@ [class key: %@, value: %@]",
+              key, val, [key className], [val className]);
+    }
+    NSLog(@"--- --- ---");
+    NSLog(@"\n");
+}
+
++ (void)showPrintInfo:(NSPrintInfo*)printInfo withMessage:(NSString *)msg {
+
+    if (!isDebug()) {
+        return;
+    }
+
+    NSLog(@"Debug printInfo: %@", msg);
+
+    NSLog(@"PrintInfo dictionary");
+    [PrintDebug showDict: [printInfo dictionary]];
+
+    NSLog(@"PrintInfo printSettings");
+    [PrintDebug showDict: [printInfo printSettings]];
+}
+
++ (void)showPresets:(NSPrintInfo*)printInfo {
+
+    NSLog(@"[native] Show PrintInfo presets");
+
+    PMPrinter pr;
+
+    PMPrintSession printSession = (PMPrintSession)[printInfo PMPrintSession];
+    OSStatus status = PMSessionGetCurrentPrinter(printSession, &pr);
+
+    if (status != noErr) {
+        NSLog(@"  PMSessionGetCurrentPrinter error: %d", status);
+        return;
+    }
+
+    if (pr == nil) {
+        NSLog(@"CPrinterJob PMSessionGetCurrentPrinter printer is nil");
+        return;
+    }
+
+    CFArrayRef presetsList = nil;
+    status = PMPrinterCopyPresets(pr, &presetsList);
+
+    if (status != noErr) {
+        NSLog(@"  PMPrinterCopyPresets is err: %d", status);
+        return;
+    }
+
+    if (presetsList == nil) {
+        NSLog(@"  presetsList is null!");
+        return;
+    }
+
+
+    CFIndex arrayCount = CFArrayGetCount(presetsList);
+    NSLog(@"  Preset list arrayCount: %ld", arrayCount);
+
+    for (CFIndex index = 0; index < arrayCount; index++)
+    {
+
+        NSLog(@"  index: %ld", index);
+
+        PMPreset preset = (PMPreset)CFArrayGetValueAtIndex(presetsList, index);
+        CFStringRef presetName = nil;
+        if (PMPresetCopyName(preset, &presetName) == noErr && CFStringGetLength(presetName) > 0)
+        {
+            NSLog(@"  presetName: '%@'", presetName);
+
+            NSDictionary* dict = nil;
+            if (PMPresetGetAttributes(preset, (CFDictionaryRef*)(&dict)) == noErr)
+            {
+                   if (dict == nil) {
+                        NSLog(@" dict is null");
+                   } else {
+                        NSLog(@" dict is not null");
+                        NSLog(@"Show dict for Preset");
+                        [PrintDebug showDict: [printInfo dictionary]];
+                   }
+            }
+            CFRelease(presetName);
+        }
+    }
+    CFRelease(presetsList);
+}
+
+@end
+
 static NSPrintInfo* createDefaultNSPrintInfo(JNIEnv* env, jstring printer)
 {
     NSPrintInfo* defaultPrintInfo = [[NSPrintInfo sharedPrintInfo] copy];
@@ -452,6 +559,9 @@ static void nsPrintInfoToJavaPrinterJob(JNIEnv* env, NSPrintInfo* src, jobject d
         }
 
         NSString* outputBin = [[src printSettings] objectForKey:@"OutputBin"];
+        if (isDebug()) {
+            NSLog(@"[CPrinterJob] nsPrintInfoToJavaPrinterJob outputBin: %@", outputBin);
+        }
         if (outputBin != nil) {
             jstring outputBinName = NSStringToJavaString(env, outputBin);
             (*env)->CallVoidMethod(env, dstPrinterJob, jm_setOutputBin, outputBinName);
@@ -552,9 +662,16 @@ static void javaPrinterJobToNSPrintInfo(JNIEnv* env, jobject srcPrinterJob, jobj
     CHECK_EXCEPTION();
     if (outputBin != NULL) {
         NSString *nsOutputBinStr = JavaStringToNSString(env, outputBin);
+        if (isDebug()) {
+            NSLog(@"[CPrinterJob] javaPrinterJobToNSPrintInfo nsOutputBinStr: %@", nsOutputBinStr);
+        }
         if (nsOutputBinStr != nil) {
             [[dst printSettings] setObject:nsOutputBinStr forKey:@"OutputBin"];
         }
+    }
+
+    if (isDebug()) {
+        [PrintDebug showPrintInfo: dst withMessage: @"CPrinterJob javaPrinterJobToNSPrintInfo"];
     }
 }
 
@@ -714,6 +831,10 @@ JNI_COCOA_ENTER(env);
         javaPrinterJobToNSPrintInfo(env, jthis, pageable, printInfo);
 
         PrintModel* printModel = [[PrintModel alloc] initWithPrintInfo:printInfo];
+
+        if (isDebug()) {
+            [PrintDebug showPrintInfo: printInfo withMessage: @"CPrinterJob printLoop"];
+        }
 
         (void)[printModel runPrintLoopWithView:printerView waitUntilDone:blocks withEnv:env];
 
