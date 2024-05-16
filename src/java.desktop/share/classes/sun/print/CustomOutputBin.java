@@ -55,13 +55,6 @@ public final class CustomOutputBin extends OutputBin {
     }
 
     /**
-     * Gets a custom output bin
-     */
-    public static synchronized CustomOutputBin getOutputBin(String name) {
-        return customMap.get(name);
-    }
-
-    /**
      * Returns the string table for super class MediaTray.
      */
     public OutputBin[] getSuperEnumTable() {

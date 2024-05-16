@@ -669,25 +669,10 @@ public final class CPrinterJob extends RasterPrinterJob {
 
     private void setOutputBin(String outputBinName) {
 
-        OutputBin outputBin = toOutputBin(outputBinName);
+        OutputBin outputBin = CustomOutputBin.createOutputBin(outputBinName);
         if (outputBin != null) {
             attributes.add(outputBin);
         }
-    }
-
-    private OutputBin toOutputBin(String outputBinName) {
-
-        PrintService ps = getPrintService();
-        if (ps == null) {
-            return null;
-        }
-
-        OutputBin[] supportedBins = (OutputBin[]) ps.getSupportedAttributeValues(OutputBin.class, null, null);
-        if (supportedBins == null || supportedBins.length == 0) {
-            return null;
-        }
-
-        return CustomOutputBin.getOutputBin(outputBinName);
     }
 
     private void setPrinterServiceFromNative(String printerName) {
