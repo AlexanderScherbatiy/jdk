@@ -2913,8 +2913,11 @@ public class ServiceDialog extends JDialog implements ActionListener {
                                 break;
                             }
                         }
+                    } else if (outputBins.length == 1) {
+                        cbOutput.setSelectedIndex(0);
                     }
-                    outputEnabled = outputBins.length != 0;
+
+                    outputEnabled = outputBins.length > 1;
                 }
             }
 
