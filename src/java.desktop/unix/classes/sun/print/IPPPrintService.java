@@ -1178,10 +1178,6 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
             catList.add(DialogTypeSelection.class);
         }
 
-        if (getAttMap != null && getAttMap.containsKey("output-bin-supported")) {
-            catList.add(OutputBin.class);
-        }
-
         supportedCats = new Class<?>[catList.size()];
         catList.toArray(supportedCats);
         Class<?>[] copyCats = new Class<?>[supportedCats.length];
