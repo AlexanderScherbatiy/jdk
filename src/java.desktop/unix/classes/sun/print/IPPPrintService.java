@@ -473,13 +473,6 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
             // get all supported attributes through IPP
             opGetAttributes();
 
-            // check IPP values first for OutputBins
-            outputBins = getSupportedOutputBins();
-
-            if (JAVA_PRINT_DEBUG) {
-                printOutputBins("IPP", outputBins);
-            }
-
             if (isCupsPrinter) {
                 // note, it is possible to query media in CUPS using IPP
                 // right now we always get it from PPD.
@@ -492,11 +485,11 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
                         cps = new CUPSPrinter(printer);
                         mediaSizeNames = cps.getMediaSizeNames();
                         mediaTrays = cps.getMediaTrays();
-                        if (outputBins == null) {
-                            outputBins = cps.getOutputBins();
-                            if (JAVA_PRINT_DEBUG) {
-                                printOutputBins("CUPS", outputBins);
-                            }
+                        outputBins = PrintServiceLookupProvider.isMac()
+                                ? cps.getOutputBins()
+                                : getSupportedOutputBins();
+                        if (JAVA_PRINT_DEBUG) {
+                            printOutputBins("CUPS or IPP", outputBins);
                         }
                         customMediaSizeNames = cps.getCustomMediaSizeNames();
                         defaultMediaIndex = cps.getDefaultMediaIndex();
@@ -531,6 +524,15 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
                 mediaTrays = new MediaTray[trayList.size()];
                 mediaTrays = trayList.toArray(mediaTrays);
             }
+
+            if (outputBins == null) {
+                outputBins = getSupportedOutputBins();
+            }
+
+            if (JAVA_PRINT_DEBUG) {
+                printOutputBins("IPP", outputBins);
+            }
+
             urlConnection.disconnect();
 
             init = true;
