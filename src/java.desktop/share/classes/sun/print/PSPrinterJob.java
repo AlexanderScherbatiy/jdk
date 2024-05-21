@@ -107,8 +107,6 @@ import javax.print.attribute.standard.Media;
  */
 public class PSPrinterJob extends RasterPrinterJob {
 
-    private static final boolean JAVA_PRINT_DEBUG = "true".equals(System.getenv("JAVA_PRINT_DEBUG"));
-
  /* Class Constants */
 
     /**
@@ -507,10 +505,6 @@ public class PSPrinterJob extends RasterPrinterJob {
         if (outputBin != null) {
             mOptions += " output-bin=" + outputBin;
         }
-
-        if (JAVA_PRINT_DEBUG) {
-            System.out.printf("PSPrinterJob options: '%s'%n", mOptions);
-        }
     }
 
     /**
@@ -751,10 +745,6 @@ public class PSPrinterJob extends RasterPrinterJob {
                 String[] execCmd = printExecCmd(mDestination, mOptions,
                                mNoJobSheet, getJobNameInt(),
                                                 1, fileName);
-
-                if (JAVA_PRINT_DEBUG) {
-                    System.out.printf("PSPrinterJob exec cmd: '%s'%n", java.util.Arrays.toString(execCmd));
-                }
 
                 Process process = Runtime.getRuntime().exec(execCmd);
                 process.waitFor();

@@ -110,9 +110,6 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
 
     public static final boolean debugPrint;
     private static final String debugPrefix = "IPPPrintService>> ";
-
-    private static final boolean JAVA_PRINT_DEBUG = "true".equals(System.getenv("JAVA_PRINT_DEBUG"));
-
     protected static void debug_println(String str) {
         if (debugPrint) {
             System.out.println(str);
@@ -431,24 +428,6 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
         }
     }
 
-    private static void printOutputBins(String prefix, OutputBin[] outputBins) {
-
-        if (outputBins == null) {
-            System.out.printf("%s output bins: null%n");
-            return;
-        }
-
-        System.out.printf("%s output bins: %d%n", prefix, outputBins.length);
-
-        for (OutputBin outputBin : outputBins) {
-            if (outputBin instanceof CustomOutputBin customOutputBin) {
-                System.out.printf("%s output bin name: %s, choice: %s%n", prefix,
-                        customOutputBin.getCustomName(), customOutputBin.getChoiceName());
-            } else {
-                System.out.printf("%s output bin: %s%n", outputBin);
-            }
-        }
-    }
 
     /*
      * Initialize mediaSizeNames, mediaTrays and other attributes.
@@ -488,9 +467,6 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
                         outputBins = PrintServiceLookupProvider.isMac()
                                 ? cps.getOutputBins()
                                 : getSupportedOutputBins();
-                        if (JAVA_PRINT_DEBUG) {
-                            printOutputBins("CUPS or IPP", outputBins);
-                        }
                         customMediaSizeNames = cps.getCustomMediaSizeNames();
                         defaultMediaIndex = cps.getDefaultMediaIndex();
                         rawResolutions = cps.getRawResolutions();
@@ -527,10 +503,6 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
 
             if (outputBins == null) {
                 outputBins = getSupportedOutputBins();
-            }
-
-            if (JAVA_PRINT_DEBUG) {
-                printOutputBins("IPP", outputBins);
             }
 
             urlConnection.disconnect();
