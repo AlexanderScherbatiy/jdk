@@ -86,6 +86,8 @@ public final class CPrinterJob extends RasterPrinterJob {
         Toolkit.getDefaultToolkit();
     }
 
+    private static final boolean JAVA_PRINT_DEBUG = "true".equals(System.getenv("JAVA_PRINT_DEBUG"));
+
     /**
      * Presents a dialog to the user for changing the properties of
      * the print job.
@@ -195,6 +197,9 @@ public final class CPrinterJob extends RasterPrinterJob {
         }
 
         outputBin = getOutputBinValue(attributes.get(OutputBin.class));
+        if (JAVA_PRINT_DEBUG) {
+            System.out.printf("[CPrinterJob] setAttributes outputBin: %s%n", outputBin);
+        }
 
         PageRanges pageRangesAttr =  (PageRanges)attributes.get(PageRanges.class);
         if (isSupportedValue(pageRangesAttr, attributes)) {
@@ -212,27 +217,6 @@ public final class CPrinterJob extends RasterPrinterJob {
                 setPageRange(-1, -1);
             }
         }
-    }
-
-    private String getOutputBinValue(Attribute attr) {
-        if (attr instanceof CustomOutputBin customOutputBin) {
-            return customOutputBin.getChoiceName();
-        } else if (attr instanceof OutputBin outputBin) {
-            String name = outputBin.toString().replace('-', ' ');
-            PrintService ps = getPrintService();
-            if (ps == null) {
-                return name;
-            }
-            OutputBin[] supportedBins = (OutputBin[]) ps.getSupportedAttributeValues(OutputBin.class, null, null);
-            for (OutputBin bin : supportedBins) {
-                CustomOutputBin customBin = (CustomOutputBin) bin;
-                if (customBin.getCustomName().equalsIgnoreCase(name)) {
-                    return customBin.getChoiceName();
-                }
-            }
-            return name;
-        }
-        return null;
     }
 
     private void setPageRangeAttribute(int from, int to, boolean isRangeSet) {
@@ -685,12 +669,19 @@ public final class CPrinterJob extends RasterPrinterJob {
     }
 
     private String getOutputBin() {
+        if (JAVA_PRINT_DEBUG) {
+            System.out.printf("[CPrinterJob] getOutputBin: %s%n", outputBin);
+        }
+
         return outputBin;
     }
 
     private void setOutputBin(String outputBinName) {
 
         OutputBin outputBin = toOutputBin(outputBinName);
+        if (JAVA_PRINT_DEBUG) {
+            System.out.printf("[CPrinterJob] setOutputBin name: %s, bin: %s%n", outputBinName, outputBin);
+        }
         if (outputBin != null) {
             attributes.add(outputBin);
         }

@@ -110,6 +110,9 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
 
     public static final boolean debugPrint;
     private static final String debugPrefix = "IPPPrintService>> ";
+
+    private static final boolean JAVA_PRINT_DEBUG = "true".equals(System.getenv("JAVA_PRINT_DEBUG"));
+
     protected static void debug_println(String str) {
         if (debugPrint) {
             System.out.println(str);
@@ -428,6 +431,24 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
         }
     }
 
+    private static void printOutputBins(String prefix, OutputBin[] outputBins) {
+
+        if (outputBins == null) {
+            System.out.printf("%s output bins: null%n");
+            return;
+        }
+
+        System.out.printf("%s output bins: %d%n", prefix, outputBins.length);
+
+        for (OutputBin outputBin : outputBins) {
+            if (outputBin instanceof CustomOutputBin customOutputBin) {
+                System.out.printf("%s output bin name: %s, choice: %s%n", prefix,
+                        customOutputBin.getCustomName(), customOutputBin.getChoiceName());
+            } else {
+                System.out.printf("%s output bin: %s%n", outputBin);
+            }
+        }
+    }
 
     /*
      * Initialize mediaSizeNames, mediaTrays and other attributes.
@@ -443,6 +464,7 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
             if ((urlConnection = getIPPConnection(myURL)) == null) {
                 mediaSizeNames = new MediaSizeName[0];
                 mediaTrays = new MediaTray[0];
+                outputBins = new OutputBin[0];
                 debug_println(debugPrefix+"initAttributes, NULL urlConnection ");
                 init = true;
                 return;
@@ -463,7 +485,12 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
                         cps = new CUPSPrinter(printer);
                         mediaSizeNames = cps.getMediaSizeNames();
                         mediaTrays = cps.getMediaTrays();
-                        outputBins = cps.getOutputBins();
+                        outputBins = PrintServiceLookupProvider.isMac()
+                                ? cps.getOutputBins()
+                                : getSupportedOutputBins();
+                        if (JAVA_PRINT_DEBUG) {
+                            printOutputBins("CUPS or IPP", outputBins);
+                        }
                         customMediaSizeNames = cps.getCustomMediaSizeNames();
                         defaultMediaIndex = cps.getDefaultMediaIndex();
                         rawResolutions = cps.getRawResolutions();
@@ -497,6 +524,15 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
                 mediaTrays = new MediaTray[trayList.size()];
                 mediaTrays = trayList.toArray(mediaTrays);
             }
+
+            if (outputBins == null) {
+                outputBins = getSupportedOutputBins();
+            }
+
+            if (JAVA_PRINT_DEBUG) {
+                printOutputBins("IPP", outputBins);
+            }
+
             urlConnection.disconnect();
 
             init = true;
@@ -1059,6 +1095,25 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
         return new Media[0];
     }
 
+    private OutputBin[] getSupportedOutputBins() {
+        if ((getAttMap != null) && getAttMap.containsKey("output-bin-supported")) {
+
+            AttributeClass attribClass = getAttMap.get("output-bin-supported");
+
+            if (attribClass != null) {
+                String[] values = attribClass.getArrayOfStringValues();
+                if (values == null || values.length == 0) {
+                    return null;
+                }
+                OutputBin[] outputBinNames = new OutputBin[values.length];
+                for (int i = 0; i < values.length; i++) {
+                    outputBinNames[i] = CustomOutputBin.createOutputBin(values[i], values[i]);
+                }
+                return outputBinNames;
+            }
+        }
+        return null;
+    }
 
     public synchronized Class<?>[] getSupportedAttributeCategories() {
         if (supportedCats != null) {
@@ -1076,6 +1131,11 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
                 (PrintRequestAttribute)printReqAttribDefault[i];
             if (getAttMap != null &&
                 getAttMap.containsKey(pra.getName()+"-supported")) {
+
+                if (pra == OutputBin.TOP && (outputBins == null || outputBins.length == 0)) {
+                    continue;
+                }
+
                 catList.add(pra.getCategory());
             }
         }
@@ -1152,6 +1212,11 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
         // reverse landscape.
         if (category == OrientationRequested.class) {
             return true;
+        }
+
+        if (category == OutputBin.class
+                && (outputBins == null || outputBins.length == 0)) {
+            return false;
         }
 
         for (int i=0;i<supportedCats.length;i++) {
@@ -1652,6 +1717,10 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
              } else {
                  return new PrinterResolution(300, 300, PrinterResolution.DPI);
              }
+        } else if (category == OutputBin.class) {
+            if (attribClass != null) {
+                return CustomOutputBin.createOutputBin(attribClass.getStringValue(), attribClass.getStringValue());
+            }
         }
 
         return null;

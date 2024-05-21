@@ -61,6 +61,7 @@ import javax.print.attribute.standard.Copies;
 import javax.print.attribute.standard.Destination;
 import javax.print.attribute.standard.DialogTypeSelection;
 import javax.print.attribute.standard.JobName;
+import javax.print.attribute.standard.OutputBin;
 import javax.print.attribute.standard.Sides;
 
 import java.io.BufferedOutputStream;
@@ -105,6 +106,8 @@ import javax.print.attribute.standard.Media;
  * @author Richard Blanchard
  */
 public class PSPrinterJob extends RasterPrinterJob {
+
+    private static final boolean JAVA_PRINT_DEBUG = "true".equals(System.getenv("JAVA_PRINT_DEBUG"));
 
  /* Class Constants */
 
@@ -491,13 +494,22 @@ public class PSPrinterJob extends RasterPrinterJob {
         if (attributes == null) {
             return; // now always use attributes, so this shouldn't happen.
         }
+        mOptions = "";
         Attribute attr = attributes.get(Media.class);
         if (attr instanceof CustomMediaTray) {
             CustomMediaTray customTray = (CustomMediaTray)attr;
             String choice = customTray.getChoiceName();
             if (choice != null) {
-                mOptions = " InputSlot="+ choice;
+                mOptions += " InputSlot="+ choice;
             }
+        }
+        String outputBin = getOutputBinValue(outputBinAttr);
+        if (outputBin != null) {
+            mOptions += " output-bin=" + outputBin;
+        }
+
+        if (JAVA_PRINT_DEBUG) {
+            System.out.printf("PSPrinterJob options: '%s'%n", mOptions);
         }
     }
 
@@ -739,6 +751,10 @@ public class PSPrinterJob extends RasterPrinterJob {
                 String[] execCmd = printExecCmd(mDestination, mOptions,
                                mNoJobSheet, getJobNameInt(),
                                                 1, fileName);
+
+                if (JAVA_PRINT_DEBUG) {
+                    System.out.printf("PSPrinterJob exec cmd: '%s'%n", java.util.Arrays.toString(execCmd));
+                }
 
                 Process process = Runtime.getRuntime().exec(execCmd);
                 process.waitFor();
@@ -1643,7 +1659,9 @@ public class PSPrinterJob extends RasterPrinterJob {
                 execCmd[n++] = "-o job-sheets=standard";
             }
             if ((pFlags & OPTIONS) != 0) {
-                execCmd[n++] = "-o" + options;
+                for(String option: options.trim().split(" ")) {
+                    execCmd[n++] = "-o " + option;
+                }
             }
         } else {
             ncomps+=1; //add 1 arg for lp
@@ -1666,7 +1684,9 @@ public class PSPrinterJob extends RasterPrinterJob {
                 execCmd[n++] = "-o job-sheets=standard";
             }
             if ((pFlags & OPTIONS) != 0) {
-                execCmd[n++] = "-o" + options;
+                for(String option: options.trim().split(" ")) {
+                    execCmd[n++] = "-o " + option;
+                }
             }
         }
         execCmd[n++] = spoolFile;
