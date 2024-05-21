@@ -1131,6 +1131,11 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
                 (PrintRequestAttribute)printReqAttribDefault[i];
             if (getAttMap != null &&
                 getAttMap.containsKey(pra.getName()+"-supported")) {
+
+                if (pra == OutputBin.TOP && (outputBins == null || outputBins.length == 0)) {
+                    continue;
+                }
+
                 catList.add(pra.getCategory());
             }
         }
@@ -1207,6 +1212,11 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
         // reverse landscape.
         if (category == OrientationRequested.class) {
             return true;
+        }
+
+        if (category == OutputBin.class
+                && (outputBins == null || outputBins.length == 0)) {
+            return false;
         }
 
         for (int i=0;i<supportedCats.length;i++) {
